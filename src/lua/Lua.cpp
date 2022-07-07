@@ -30,7 +30,7 @@ Lua::Lua(bool use_standard_lib) {
 
 }
 
-void Lua::RunStr(const std::string &str) {
+void Lua::runStr(const std::string &str) {
     if (luaL_loadstring(GetLPtr(), str.c_str()) || lua_pcall(GetLPtr(), 0, 0, 0)) {
         LOG_ERROR("Run string \"%s\", error : %s\n",
                 str.c_str(),  lua_tostring(GetLPtr(), -1));
@@ -39,7 +39,7 @@ void Lua::RunStr(const std::string &str) {
     }
 }
 
-void Lua::RunFile(const std::string &file) {
+void Lua::runFile(const std::string &file) {
     if (luaL_loadfile(GetLPtr(), file.c_str()) || lua_pcall(GetLPtr(), 0, 0, 0)) {
         LOG_ERROR("Run file \"%s\", error : %s\n",
                 file.c_str(),  lua_tostring(GetLPtr(), -1));
@@ -96,28 +96,28 @@ void Lua::pop(size_t count) {
     lua_pop(GetLPtr(), count);
 }
 
-void Lua::GetGlobalToTop(const std::string &var) {
+void Lua::getGlobalToTop(const std::string &var) {
     lua_getglobal(GetLPtr(), var.c_str());
 }
 
-int64_t Lua::ToType(int index, int64_t &re) {
+int64_t Lua::toType(int index, int64_t &re) {
     re = static_cast<int64_t>(luaL_checkinteger(GetLPtr(), index));
     return re;
 }
 
-double Lua::ToType(int index, double &re) {
+double Lua::toType(int index, double &re) {
     re = static_cast<double>(luaL_checknumber(GetLPtr(), index));
     return re;
 }
 
-std::string Lua::ToType(int index, std::string &re) {
+std::string Lua::toType(int index, std::string &re) {
     size_t size;
     const char *c = luaL_checklstring(GetLPtr(), index, &size);
     re.assign(c, size);
     return re;
 }
 
-void Lua::GetTable(const std::string &table, const std::string &key,
+void Lua::getTable(const std::string &table, const std::string &key,
         std::string &value) {
 
     GetGlobalToTop(table);
@@ -131,7 +131,7 @@ void Lua::GetTable(const std::string &table, const std::string &key,
     pop(); // pop table
 }
 
-void Lua::SetTable(const std::string &table, const std::string &key,
+void Lua::setTable(const std::string &table, const std::string &key,
         const std::string &value) {
 
     GetGlobalToTop(table);
@@ -165,7 +165,7 @@ void Lua::stackDump() {
     LOG_TRACE("\n");
 }
 
-void Lua::CallLuaFunP(const std::string &fun_name, size_t n) {
+void Lua::callLuaFunP(const std::string &fun_name, size_t n) {
     stackDump();
     LOG_TRACE("function parameter count: %d\n", n);
     int return_count = 0;
@@ -178,7 +178,7 @@ void Lua::CallLuaFunP(const std::string &fun_name, size_t n) {
     //value = pop(); // get return value
 }
 
-lua_State *Lua::GetLPtr() const {
+lua_State *Lua::getLPtr() const {
     return lua_state_.get();
 }
 
