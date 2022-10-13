@@ -1,7 +1,6 @@
 // Copyright (C) 2022 All rights reserved.
 // Email: oxox0@qq.com. Created in 202206
 
-
 #ifndef LUA_LUA_H
 #define LUA_LUA_H
 
@@ -33,8 +32,28 @@ public: // interaction: c call lua
         callLuaFunP(lua_fun_name, 0, std::forward<Ts>(args)...);
     }
 
-public: // interaction: lua call c
+public: // type definition
+    typedef int (*lua_fnc) (lua_State *L);
 
+public: // interaction: lua call c
+    void registerFunc(lua_fnc func) {
+        pushCclosureFunc(func, 0);
+    }
+
+    // @param upvalue_num it will pop the number stack to the up value
+    void pushCclosureFunc(lua_fnc func, int upvalue_num);
+    void getUpvalueToTop(uint8_t up_index);
+    int numArguments();
+
+// // cclosure
+// lua_pashcclosure(L, c_fun, count);
+// int c_fun(lua_State *L) {
+//     lua_integer op = luaL_optinteger(L, 1, 0); // the paraemter count <= 256
+//      lua_upvalueindex(index);
+//      lua_copy(L, index, lua_upvalueindex(index)); // update
+//
+// }
+//
 
 public: // op stack
     void push(); // push nil
@@ -45,6 +64,8 @@ public: // op stack
     void push(const char *s);
     void pushLightUserdata(void *user_data);
     void pushUserData();
+    void pushTable();
+    void pushCFunction(lua_fnc func);
 
     template<typename T>
     void push(T &&v) {
@@ -111,11 +132,16 @@ public: // op type
     }
 
 public: // check type
-    bool isInteger();
-    bool isNumber();
-    bool isString();
-    bool isUserdata();
-    bool isLightUserdata();
+    bool isNil(int stack_index);
+    bool isBoolean(int stack_index);
+    bool isInteger(int stack_index);
+    bool isNumber(int stack_index);
+    bool isString(int stack_index);
+    bool isTable(int stack_index);
+    bool isCFuntion(int stack_index);
+    bool isUserdata(int stack_index);
+    bool isLightUserdata(int stack_index);
+    bool isTHread(int stack_index);
 
     enum LuaType {
         Nil,
@@ -134,15 +160,36 @@ public: // check type
 
 public: // op table
 
-    // push key value to the stack top
-    void getTable(int table_stack_index, const std::string &key);
-    void setTable(int table_stack_index, const std::string &key,
-            int value_stack_index);
+    // it will not trigger meta method
+    void getTableKeyValueToTop(int table_stack_index);
+    // it will trigger meta method
+    void getTableKeyToTop(int table_stack_index, const std::string &key);
+    // it will pop top value
+    // it will trigger meta method
+    void setTopValueToTable(int table_stack_index, const std::string &key);
+    void setTopKeyValueToTable(int table_stack_index);
 
-    // push key value to the stack top
-    void getTable(int table_stack_index, int key);
-    void setTable(int table_stack_index, int key,
-            int value_stack_index);
+    // the following function is operator integer table,  lua integer index
+    // start at 1
+
+    // this is the result of the length operator("#")
+    int tableLen(int table_stack_index);
+    void getTableKeyToTop(int table_stack_index, int key);
+    // it will pop top value
+    void setTopValueToTable(int table_stack_index, int key);
+
+    template <typename T>
+    void pushTableVector(const std::vector<T> &vec)
+    {
+        if (new_table) lua_newtable(lua);
+        size_t size = value.size();
+        for (size_t i = 0; i < size; ++i)
+        {
+            lua_pushinteger(lua, static_cast<lua_Integer>(value[i]));
+            push(value[i]);
+            lua_seti(lua, -2, i + 1);
+        }
+    }
 
 public: // debug
     void stackDump();
@@ -176,15 +223,6 @@ private:
 //   {NULL, NULL}
 // }
 //
-//
-// // cclosure
-// lua_pashcclosure(L, c_fun, count);
-// int c_fun(lua_State *L) {
-//     lua_integer op = luaL_optinteger(L, 1, 0); // the paraemter count <= 256
-//      lua_upvalueindex(index);
-//      lua_copy(L, index, lua_upvalueindex(index)); // update
-//
-// }
 //
 // // user data
 // lua_newuserdata(L, size);

@@ -7,6 +7,8 @@ project("c_lua")
 
 # import common configure
 include(cmake/common.cmake)
+include(clang_format)
+include(clang_tidy)
 
 # the depend on lua need add add_dependencies(your_target lua_build)
 include(lua)
